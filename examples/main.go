@@ -16,35 +16,24 @@ func main() {
 	defer conn.Close()
 
 	p := pool.New(
-		5,
-		3*time.Second,
+		5,             // <-- pool capacity
+		3*time.Second, // <-- wait for resource for this long before getting `pool.ErrResourceUnavailable`
 		func() (*amqp.Channel, error) {
-			log.Println("Creating new channel")
-			return conn.Channel()
+			return conn.Channel() // <-- we are able to capture anything in constructor
 		},
 		func(c *amqp.Channel) {
-			log.Println("Cleaning up channel")
-			c.Close()
+			c.Close() // <-- destructors are called for each resource that pool owns
 		},
 		true,
 	)
+
+	// calls destructor for each obj currently in pool
 	defer p.Cleanup()
 
-	for i := 0; i < 5; i++ {
-		ch, err := conn.Channel()
-		if err != nil {
-			continue
-		}
-		hasPut := p.Put(ch)
-		if hasPut {
-			log.Println("Put channel into the pool")
-		}
-	}
-}
+	ch, err := conn.Channel()
+	p.Put(ch) // we can preallocate some resources
 
-// Pool contains mutex, thus pool may be passed only by pointer.
-func PoolUser(p *pool.Pool[*amqp.Channel]) {
-	_, _ = p.Get()
-	_, _ = p.Get()
-	_, _ = p.Get()
+	_, _ = p.Get()  // get preallocated resources
+	c, _ := p.Get() // this time pool will create resource from scratch
+	p.Put(c)        // in order to avoid this we need to return resources to the pool
 }
