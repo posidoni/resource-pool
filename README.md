@@ -9,9 +9,9 @@ Sometimes the default value of resource is useless and there is no way to fix th
 ## Usage
 
 ```go
+// import pool "github.com/posidoni/resource-pool"
 
-conn, _ := amqp.Dial("amqp://guest:guest@localhost:5672/")
-defer conn.Close()
+conn, _ := amqp.Dial("amqp://guest:guest@localhost:5672/") // let's say this is provider of resources we want to manage
 
 p := pool.New(
     2,             // <-- pool capacity, (-1) for unlimited pool
