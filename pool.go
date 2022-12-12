@@ -79,7 +79,7 @@ func New[T any](
 	if preallocatePool && maxSize != -1 {
 		p.idle = make(map[int64]T, maxSize)
 	} else {
-		p.idle = make(map[int64]T, maxSize)
+		p.idle = make(map[int64]T)
 	}
 
 	go p.launchPoolMaintainer()
